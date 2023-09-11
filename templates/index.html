@@ -1,9 +1,56 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Flask Template Example</title>
-</head>
-<body>
-    <h1>hi</h1>
-</body>
+  <head>
+    <title>Audio-to-Agreement (change title later)</title>
+  </head>
+  <body>
+    <h1>Audio-to-Agreement (change title later)</h1>
+
+    <!-- Step 1: user uploads an audio file -->
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <input type="file" name="audio_file" accept=".mp3, .wav, .ogg" />
+      <input type="submit" value="upload audio" />
+    </form>
+
+    <!-- Step 2: display transcribed text -->
+    <div id="transcription">
+      <h2>Transcribed Text:</h2>
+      <p>display the transcribed text from audio</p>
+    </div>
+
+    <!-- Step 3: generate agreements -->
+    <h2>Generated Agreements:</h2>
+    <ul>
+      <li>Agreement 1</li>
+      <li>Agreement 2</li>
+      <!-- additional agreements will be listed here -->
+    </ul>
+
+    <!-- Step 4: user feedback and modification -->
+    <h2>Review and Modify Agreements:</h2>
+    <form action="/modify" method="POST">
+      <textarea
+        name="user_feedback"
+        placeholder="Provide feedback and modifications"
+      ></textarea>
+      <input type="submit" value="Submit Feedback" />
+    </form>
+
+    <!-- Step 5: ai suggestions -->
+    <h2>AI Suggestions:</h2>
+    <p>[AI-generated suggestions based on user feedback will appear here]</p>
+
+    <!-- Step 6: finalise & download agreements -->
+    <a href="/download">Download Customized Agreements</a>
+
+    <!-- future features - will leave it here for now and check off later-->
+    <h2>Future Features:</h2>
+    <ul>
+      <li>Live translation</li>
+      <li>Read agreements aloud</li>
+      <li>Auto-sign certain documents</li>
+      <li>Remove signatures</li>
+      <li>Manage document collections</li>
+    </ul>
+  </body>
 </html>
