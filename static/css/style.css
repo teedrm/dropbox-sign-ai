@@ -1,0 +1,11 @@
+h1 {
+  color: rgb(97, 38, 153);
+}
+
+ul.future-features {
+  list-style-type: none;
+}
+
+.crossed-out {
+  text-decoration: line-through;
+}

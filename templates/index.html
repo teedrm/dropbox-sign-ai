@@ -2,6 +2,11 @@
 <html>
   <head>
     <title>Audio-to-Agreement (change title later)</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
   </head>
   <body>
     <h1>Audio-to-Agreement (change title later)</h1>
@@ -20,37 +25,56 @@
 
     <!-- Step 3: generate agreements -->
     <h2>Generated Agreements:</h2>
+    <p>Note: maybe generate 3 agreement templates to choose from (?)</p>
     <ul>
       <li>Agreement 1</li>
       <li>Agreement 2</li>
+      <li>Agreement 3</li>
       <!-- additional agreements will be listed here -->
     </ul>
 
-    <!-- Step 4: user feedback and modification -->
+    <!-- Step 4: user feedback and modification using audio file upload -->
     <h2>Review and Modify Agreements:</h2>
-    <form action="/modify" method="POST">
-      <textarea
-        name="user_feedback"
-        placeholder="Provide feedback and modifications"
-      ></textarea>
-      <input type="submit" value="Submit Feedback" />
+    <form action="/modify" method="POST" enctype="multipart/form-data">
+      <input type="file" name="audio_feedback" accept=".mp3, .wav, .ogg" />
+      <input type="submit" value="Upload Audio Feedback" />
     </form>
 
     <!-- Step 5: ai suggestions -->
     <h2>AI Suggestions:</h2>
-    <p>[AI-generated suggestions based on user feedback will appear here]</p>
+    <p>AI-generated suggestions based on user feedback will display here</p>
 
     <!-- Step 6: finalise & download agreements -->
     <a href="/download">Download Customized Agreements</a>
 
     <!-- future features - will leave it here for now and check off later-->
     <h2>Future Features:</h2>
-    <ul>
-      <li>Live translation</li>
-      <li>Read agreements aloud</li>
-      <li>Auto-sign certain documents</li>
-      <li>Remove signatures</li>
-      <li>Manage document collections</li>
+    <ul class="future-features">
+      {% for feature in future_features %}
+      <li>
+        <input
+          type="checkbox"
+          id="feature{{ loop.index }}"
+          {%
+          if
+          feature.checked
+          %}checked{%
+          endif
+          %}
+        />
+        <label
+          for="feature{{ loop.index }}" 
+          {%
+          if
+          feature.checked
+          %}class="crossed-out"
+          {%
+          endif
+          %}
+          >{{ feature.name }}</label
+        >
+      </li>
+      {% endfor %}
     </ul>
   </body>
 </html>
