@@ -6,6 +6,6 @@ ul.future-features {
   list-style-type: none;
 }
 
-.crossed-out {
+ul.future-features li.checked {
   text-decoration: line-through;
 }

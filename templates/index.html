@@ -50,31 +50,11 @@
     <!-- future features - will leave it here for now and check off later-->
     <h2>Future Features:</h2>
     <ul class="future-features">
-      {% for feature in future_features %}
-      <li>
-        <input
-          type="checkbox"
-          id="feature{{ loop.index }}"
-          {%
-          if
-          feature.checked
-          %}checked{%
-          endif
-          %}
-        />
-        <label
-          for="feature{{ loop.index }}" 
-          {%
-          if
-          feature.checked
-          %}class="crossed-out"
-          {%
-          endif
-          %}
-          >{{ feature.name }}</label
-        >
-      </li>
-      {% endfor %}
+      <li>Live translation</li>
+      <li>Read agreements aloud</li>
+      <li>Auto-sign certain documents</li>
+      <li>Remove signatures</li>
+      <li>Manage document collections</li>
     </ul>
   </body>
 </html>
