@@ -14,6 +14,9 @@ class FileChangeHandler(FileSystemEventHandler):
             time.sleep(1)
             Popen(["python3", APP_SCRIPT], stdout=PIPE, stderr=PIPE)
 
+print("Current working directory:", os.getcwd())
+
+
 if __name__ == "__main__":
     event_handler = FileChangeHandler()
     observer = Observer()
