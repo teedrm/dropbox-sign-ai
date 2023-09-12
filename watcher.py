@@ -12,7 +12,7 @@ class FileChangeHandler(FileSystemEventHandler):
             print("Changes detected. Reloading the server...")
             os.system("pkill -f " + APP_SCRIPT)
             time.sleep(1)
-            Popen(["python", APP_SCRIPT], stdout=PIPE, stderr=PIPE)
+            Popen(["python3", APP_SCRIPT], stdout=PIPE, stderr=PIPE)
 
 print("Current working directory:", os.getcwd())
 
