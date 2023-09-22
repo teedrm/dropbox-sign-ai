@@ -1,27 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Audio-to-Agreement (change title later)</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="microphone 'self'" />
+    <title>App title tbd</title>
+
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
   </head>
   <body>
     <h1>Audio-to-Agreement (change title later)</h1>
 
     <!-- Step 1: user uploads an audio file -->
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="audio_file" accept=".mp3, .wav, .ogg" />
-      <input type="submit" value="upload audio" />
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".mp3, .wav, .ogg" hidden />
+      <input type="submit" value="Transcribe" hidden />
     </form>
 
     <!-- Step 2: display transcribed text -->
-    <div id="transcription">
-      <h2>Transcribed Text:</h2>
-      <p>display the transcribed text from audio</p>
+    <button id="startSpeechRecognition">Start Speech</button>
+    <button id="eraseTranscription">Erase</button>
+    {% if transcript == "" %}
+    <div id="transcription">say something</div>
+    {% endif %} {% if transcript != "" %}
+    <div id="speechTranscriptConainer">
+      <div id="transcription">
+        <h2>Transcribed Text:</h2>
+        <p>{{ transcript }}</p>
+      </div>
     </div>
+    {% endif %}
 
     <!-- Step 3: generate agreements -->
     <h2>Generated Agreements:</h2>
@@ -56,5 +63,42 @@
       <li>Remove signatures</li>
       <li>Manage document collections</li>
     </ul>
+
+    <script>
+      $(document).ready(function () {
+        const $transcription = $("#transcription");
+
+        function appendTranscript(transcript) {
+          const currentTime = new Date().toLocaleTimeString();
+          const newSpeech = `<p><strong>${currentTime}:</strong><span style="color: blue;">${transcript}</span></p>`;
+          $transcription.append(newSpeech);
+        }
+
+        $("#startSpeechRecognition").click(function () {
+          const recognition = new webkitSpeechRecognition(); // use webkit - Chrome
+          recognition.continuous = true;
+
+          recognition.onresult = function (event) {
+            const transcript =
+              event.results[event.results.length - 1][0].transcript;
+            appendTranscript(transcript);
+          };
+
+          recognition.onstart = function () {
+            console.log("start");
+          };
+
+          recognition.onend = function () {
+            console.log("end");
+          };
+
+          recognition.start();
+        });
+
+        $("#eraseTranscription").click(function () {
+          $transcription.empty();
+        });
+      });
+    </script>
   </body>
 </html>
