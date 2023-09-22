@@ -1,28 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Audio-to-Agreement (change title later)</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
+    <meta charset="UTF-8" />
+    <title>App title tbd</title>
+
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
   </head>
   <body>
     <h1>Audio-to-Agreement (change title later)</h1>
-
     <!-- Step 1: user uploads an audio file -->
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="audio_file" accept=".mp3, .wav, .ogg" />
-      <input type="submit" value="upload audio" />
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".mp3, .wav, .ogg" />
+      <input type="submit" value="Transcribe" />
     </form>
 
     <!-- Step 2: display transcribed text -->
-    <div id="transcription">
-      <h2>Transcribed Text:</h2>
-      <p>display the transcribed text from audio</p>
+    {% if transcript == "" %}
+    <div id="transcription"></div>
+    {% endif %} {% if transcript != "" %}
+    <div id="speechTranscriptConainer">
+      <div id="transcription">
+        <h2>Transcribed Text:</h2>
+        <p>{{transcript}}</p>
+      </div>
     </div>
-
+    {% endif %}
     <!-- Step 3: generate agreements -->
     <h2>Generated Agreements:</h2>
     <p>Note: maybe generate 3 agreement templates to choose from (?)</p>
@@ -56,5 +58,13 @@
       <li>Remove signatures</li>
       <li>Manage document collections</li>
     </ul>
+    <script>
+      $(document).ready(function () {
+        $('input[type="file"]').change(function (e) {
+          var upload = e.target.files[0].name;
+          $("#filename").text(upload);
+        });
+      });
+    </script>
   </body>
 </html>
