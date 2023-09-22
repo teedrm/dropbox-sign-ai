@@ -2,29 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="microphone 'self'" />
     <title>App title tbd</title>
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
   </head>
   <body>
     <h1>Audio-to-Agreement (change title later)</h1>
+
     <!-- Step 1: user uploads an audio file -->
     <form method="post" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".mp3, .wav, .ogg" />
-      <input type="submit" value="Transcribe" />
+      <input type="file" name="file" accept=".mp3, .wav, .ogg" hidden />
+      <input type="submit" value="Transcribe" hidden />
     </form>
 
     <!-- Step 2: display transcribed text -->
+   <button id="startSpeechRecognition">Start Speech Recognition</button>
     {% if transcript == "" %}
-    <div id="transcription"></div>
+    <div id="transcription">say something</div>
     {% endif %} {% if transcript != "" %}
     <div id="speechTranscriptConainer">
       <div id="transcription">
         <h2>Transcribed Text:</h2>
-        <p>{{transcript}}</p>
+        <p>{{ transcript }}</p>
       </div>
     </div>
     {% endif %}
+    
+
     <!-- Step 3: generate agreements -->
     <h2>Generated Agreements:</h2>
     <p>Note: maybe generate 3 agreement templates to choose from (?)</p>
@@ -58,11 +63,28 @@
       <li>Remove signatures</li>
       <li>Manage document collections</li>
     </ul>
+
     <script>
       $(document).ready(function () {
-        $('input[type="file"]').change(function (e) {
-          var upload = e.target.files[0].name;
-          $("#filename").text(upload);
+        $("#startSpeechRecognition").click(function () {
+          const recognition = new webkitSpeechRecognition(); // Use webkit prefix for Chrome
+          recognition.continuous = true;
+
+          recognition.onresult = function (event) {
+            const transcript =
+              event.results[event.results.length - 1][0].transcript;
+            $("#transcription").text("Transcribed Text: " + transcript);
+          };
+
+          recognition.onstart = function () {
+            console.log("Speech recognition started");
+          };
+
+          recognition.onend = function () {
+            console.log("Speech recognition ended");
+          };
+
+          recognition.start();
         });
       });
     </script>
