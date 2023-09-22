@@ -17,7 +17,7 @@
     </form>
 
     <!-- Step 2: display transcribed text -->
-   <button id="startSpeechRecognition">Start Speech Recognition</button>
+    <button id="startSpeechRecognition">Start Speech Recognition</button>
     {% if transcript == "" %}
     <div id="transcription">say something</div>
     {% endif %} {% if transcript != "" %}
@@ -28,7 +28,6 @@
       </div>
     </div>
     {% endif %}
-    
 
     <!-- Step 3: generate agreements -->
     <h2>Generated Agreements:</h2>
@@ -66,6 +65,14 @@
 
     <script>
       $(document).ready(function () {
+        const $transcription = $("#transcription");
+
+        function appendTranscript(transcript) {
+          const currentTime = new Date().toLocaleTimeString();
+          const newSpeech = `<p><strong>${currentTime}:</strong> ${transcript}</p>`;
+          $transcription.append(newSpeech);
+        }
+
         $("#startSpeechRecognition").click(function () {
           const recognition = new webkitSpeechRecognition(); // Use webkit prefix for Chrome
           recognition.continuous = true;
@@ -73,7 +80,7 @@
           recognition.onresult = function (event) {
             const transcript =
               event.results[event.results.length - 1][0].transcript;
-            $("#transcription").text("Transcribed Text: " + transcript);
+            appendTranscript(transcript);
           };
 
           recognition.onstart = function () {
