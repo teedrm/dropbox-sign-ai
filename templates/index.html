@@ -17,7 +17,8 @@
     </form>
 
     <!-- Step 2: display transcribed text -->
-    <button id="startSpeechRecognition">Start Speech Recognition</button>
+    <button id="startSpeechRecognition">Start Speech</button>
+    <button id="eraseTranscription">Erase</button>
     {% if transcript == "" %}
     <div id="transcription">say something</div>
     {% endif %} {% if transcript != "" %}
@@ -69,12 +70,12 @@
 
         function appendTranscript(transcript) {
           const currentTime = new Date().toLocaleTimeString();
-          const newSpeech = `<p><strong>${currentTime}:</strong> ${transcript}</p>`;
+          const newSpeech = `<p><strong>${currentTime}:</strong><span style="color: blue;">${transcript}</span></p>`;
           $transcription.append(newSpeech);
         }
 
         $("#startSpeechRecognition").click(function () {
-          const recognition = new webkitSpeechRecognition(); // Use webkit prefix for Chrome
+          const recognition = new webkitSpeechRecognition(); // use webkit - Chrome
           recognition.continuous = true;
 
           recognition.onresult = function (event) {
@@ -84,14 +85,18 @@
           };
 
           recognition.onstart = function () {
-            console.log("Speech recognition started");
+            console.log("start");
           };
 
           recognition.onend = function () {
-            console.log("Speech recognition ended");
+            console.log("end");
           };
 
           recognition.start();
+        });
+
+        $("#eraseTranscription").click(function () {
+          $transcription.empty();
         });
       });
     </script>
