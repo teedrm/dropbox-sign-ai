@@ -64,6 +64,7 @@
       <li>Manage document collections</li>
     </ul>
 
+    <!--responsible for live speech to text with Web Speech API -->
     <script>
       $(document).ready(function () {
         const $transcription = $("#transcription");
@@ -75,7 +76,7 @@
         }
 
         $("#startSpeechRecognition").click(function () {
-          const recognition = new webkitSpeechRecognition(); // use webkit - Chrome
+          const recognition = new webkitSpeechRecognition(); // Web Speech API
           recognition.continuous = true;
 
           recognition.onresult = function (event) {
