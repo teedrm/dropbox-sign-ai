@@ -35,7 +35,6 @@ function App() {
       setIsSpeechDetected(false);
       console.log('end');
       if (isStopButtonClicked) {
-        // Stop button was clicked, start summarization
         startSummarization();
       }
     };
@@ -48,7 +47,6 @@ function App() {
     if (recognition) {
       recognition.stop();
       setIsStopButtonClicked(true);
-      // Start summarization immediately when the "Stop Speech" button is clicked
       startSummarization();
     }
   };
@@ -62,19 +60,12 @@ function App() {
 
   const startSummarization = () => {
     if (!isSpeechDetected) {
-      // Split the transcript into individual messages based on line breaks
-      const messages = transcript.split('\n');
+      const transcriptData = transcript;
 
-      // Filter out empty messages and timestamps
-      const filteredMessages = messages.filter((message) => message.trim() !== '');
-
-      // Join the filtered messages to create a single text for summarization
-      const summarizedText = filteredMessages.join('\n');
-
-      if (summarizedText) {
+      if (transcriptData) {
         fetch('http://localhost:8080/summarize', {
           method: 'POST',
-          body: JSON.stringify({ transcript: summarizedText }),
+          body: JSON.stringify({ transcript: transcriptData }),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -96,6 +87,7 @@ function App() {
     }
     setIsSpeechDetected(false);
   };
+
 
   useEffect(() => {
     if (transcript !== '' && !isSpeechDetected) {
