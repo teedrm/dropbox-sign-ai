@@ -1,14 +1,89 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 function App() {
   const [transcript, setTranscript] = useState('');
+  const [isSpeechDetected, setIsSpeechDetected] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [speechTimestamps, setSpeechTimestamps] = useState([]);
+  const [recognition, setRecognition] = useState(null);
+
+  const appendTranscriptWithTimestamp = (newTranscript) => {
+    const currentTime = new Date().toLocaleTimeString();
+    const newSpeech = `${currentTime}: ${newTranscript}`;
+    setTranscript((prevTranscript) => prevTranscript + '\n' + newSpeech);
+    setSpeechTimestamps((prevTimestamps) => [...prevTimestamps, newSpeech]);
+    setIsSpeechDetected(true);
+  };
 
   const startSpeechRecognition = () => {
+    const recognitionInstance = new window.webkitSpeechRecognition();
+    recognitionInstance.continuous = true;
+
+    const summarizationTimeout = setTimeout(startSummarization, 60000);
+
+    recognitionInstance.onresult = function (event) {
+      const newTranscript = event.results[event.results.length - 1][0].transcript;
+      appendTranscriptWithTimestamp(newTranscript);
+      clearTimeout(summarizationTimeout);
+    };
+
+    recognitionInstance.onstart = function () {
+      setIsSpeechDetected(true);
+      console.log('start');
+    };
+
+    recognitionInstance.onend = function () {
+      setIsSpeechDetected(false);
+      console.log('end');
+    };
+
+    recognitionInstance.start();
+    setRecognition(recognitionInstance);
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognition) {
+      recognition.stop();
+    }
   };
 
   const eraseTranscription = () => {
     setTranscript('');
+    setSummary('');
+    setIsSpeechDetected(false);
+    setSpeechTimestamps([]);
   };
+
+  const startSummarization = () => {
+    if (!isSpeechDetected) {
+      const transcriptData = transcript;
+
+      if (transcriptData) {
+        fetch('/summarize', {
+          method: 'POST',
+          body: JSON.stringify({ transcript: transcriptData }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const newSummary = data.summary;
+            setSummary(newSummary);
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+      }
+    }
+    setIsSpeechDetected(false);
+  };
+
+  useEffect(() => {
+    if (transcript !== '' && !isSpeechDetected) {
+      startSummarization();
+    }
+  }, [transcript, isSpeechDetected]);
 
   return (
     <div className="App">
@@ -22,6 +97,7 @@ function App() {
 
       {/* Step 2: display transcribed text */}
       <button onClick={startSpeechRecognition}>Start Speech</button>
+      <button onClick={stopSpeechRecognition}>Stop Speech</button>
       <button onClick={eraseTranscription}>Erase</button>
       {transcript === '' ? (
         <div id="transcription">say something</div>
@@ -34,10 +110,17 @@ function App() {
         </div>
       )}
 
+      {/* Display speech timestamps */}
+      <div id="speechTimestamps">
+        {speechTimestamps.map((timestamp, index) => (
+          <p key={index}>{timestamp}</p>
+        ))}
+      </div>
+
       {/* Step 3: display the summary */}
       <div id="summaryContainer">
         <h2>Summary:</h2>
-        <div id="summary"></div>
+        <div id="summary">{summary}</div>
       </div>
 
       {/* Step 4: generate agreements */}
