@@ -1,9 +1,10 @@
 # Import necessary libraries
-from flask import Flask, render_template, request, redirect, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, send_from_directory
 import speech_recognition as sr
 from pydub import AudioSegment
 from io import BytesIO
 from transformers import BartTokenizer, BartForConditionalGeneration
+import os
 
 app = Flask(__name__)
 
@@ -12,30 +13,16 @@ model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
 
-@app.route("/", methods=["GET", "POST"])
+# Define the path to the React app's build directory
+react_build_dir = os.path.join(os.path.dirname(__file__), 'client/build')
+
+@app.route("/", methods=["GET"])
 def index():
-    transcript = ""
-    if request.method == "POST":
-        if "file" not in request.files:
-            return redirect(request.url)
+    return send_from_directory(react_build_dir, 'index.html')
 
-        file = request.files["file"]
-        if file.filename == "":
-            return redirect(request.url)
-
-        if file:
-            try:
-                audio = AudioSegment.from_mp3(file)
-                audio.export("temp.wav", format="wav")
-                audio_file = sr.AudioFile("temp.wav")
-                recognizer = sr.Recognizer()
-                with audio_file as source:
-                    audio_data = recognizer.record(source)
-                transcript = recognizer.recognize_google(audio_data, key=None)
-            except Exception as e:
-                transcript = f"Error: {str(e)}"
-
-    return render_template('index.html', transcript=transcript)
+@app.route("/static/<path:path>", methods=["GET"])
+def serve_static(path):
+    return send_from_directory(os.path.join(react_build_dir, 'static'), path)
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
