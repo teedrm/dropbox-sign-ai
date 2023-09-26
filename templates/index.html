@@ -22,13 +22,19 @@
     {% if transcript == "" %}
     <div id="transcription">say something</div>
     {% endif %} {% if transcript != "" %}
-    <div id="speechTranscriptConainer">
+    <div id="speechTranscriptContainer">
       <div id="transcription">
         <h2>Transcribed Text:</h2>
         <p>{{ transcript }}</p>
       </div>
     </div>
     {% endif %}
+
+    <!-- display the summary -->
+    <div id="summaryContainer">
+      <h2>Summary:</h2>
+      <div id="summary"></div>
+    </div>
 
     <!-- Step 3: generate agreements -->
     <h2>Generated Agreements:</h2>
@@ -64,24 +70,59 @@
       <li>Manage document collections</li>
     </ul>
 
+    <!--responsible for live speech to text with Web Speech API -->
     <script>
       $(document).ready(function () {
         const $transcription = $("#transcription");
+        const $summary = $("#summary");
+        let isSpeechDetected = false; // track speech detection
 
         function appendTranscript(transcript) {
           const currentTime = new Date().toLocaleTimeString();
           const newSpeech = `<p><strong>${currentTime}:</strong><span style="color: blue;">${transcript}</span></p>`;
           $transcription.append(newSpeech);
+          isSpeechDetected = true;
+        }
+
+        function startSummarization() {
+          if (!isSpeechDetected) {
+            // if no speech detected within 1 min, start summarization
+            const transcript = $transcription.text(); // get all transcript
+            if (transcript) {
+              // send transcript for summarization
+              fetch("/summarize", {
+                method: "POST",
+                body: JSON.stringify({ transcript: transcript }),
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  // display #summary
+                  const summary = data.summary;
+                  $summary.html(`<p>${summary}</p>`);
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                });
+            }
+          }
+          isSpeechDetected = false;
         }
 
         $("#startSpeechRecognition").click(function () {
-          const recognition = new webkitSpeechRecognition(); // use webkit - Chrome
+          const recognition = new webkitSpeechRecognition();
           recognition.continuous = true;
+
+          // set a timeout for summarization after 1 min (i have it as 6 seconds for now to test)
+          const summarizationTimeout = setTimeout(startSummarization, 6000);
 
           recognition.onresult = function (event) {
             const transcript =
               event.results[event.results.length - 1][0].transcript;
             appendTranscript(transcript);
+            clearTimeout(summarizationTimeout); // reset timeout
           };
 
           recognition.onstart = function () {
@@ -97,6 +138,8 @@
 
         $("#eraseTranscription").click(function () {
           $transcription.empty();
+          $summary.empty();
+          isSpeechDetected = false;
         });
       });
     </script>
