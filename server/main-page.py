@@ -8,12 +8,12 @@ import os
 
 app = Flask(__name__)
 
-# Load BART summarization model and tokenizer
+# BART summarization model and tokenizer
 model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
 
-# Define the path to the React app's build directory
+#  path to build directory
 react_build_dir = os.path.join(os.path.dirname(__file__), 'client/build')
 
 @app.route("/", methods=["GET"])
@@ -30,7 +30,7 @@ def summarize():
         data = request.get_json()
         transcript = data.get("transcript", "")
 
-        # Perform summarization using BART model
+        #summarization using BART model
         input_ids = tokenizer.encode("summarize: " + transcript, return_tensors="pt", max_length=1024, truncation=True)
         summary_ids = summarization_model.generate(input_ids, max_length=150, min_length=40, length_penalty=2.0, num_beams=4, early_stopping=True)
         summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
