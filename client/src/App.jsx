@@ -6,6 +6,7 @@ function App() {
   const [summary, setSummary] = useState('');
   const [speechTimestamps, setSpeechTimestamps] = useState([]);
   const [recognition, setRecognition] = useState(null);
+  const [isStopButtonClicked, setIsStopButtonClicked] = useState(false);
 
   const appendTranscriptWithTimestamp = (newTranscript) => {
     const currentTime = new Date().toLocaleTimeString();
@@ -19,22 +20,24 @@ function App() {
     const recognitionInstance = new window.webkitSpeechRecognition();
     recognitionInstance.continuous = true;
 
-    const summarizationTimeout = setTimeout(startSummarization, 60000);
-
     recognitionInstance.onresult = function (event) {
       const newTranscript = event.results[event.results.length - 1][0].transcript;
       appendTranscriptWithTimestamp(newTranscript);
-      clearTimeout(summarizationTimeout);
     };
 
     recognitionInstance.onstart = function () {
       setIsSpeechDetected(true);
+      setIsStopButtonClicked(false);
       console.log('start');
     };
 
     recognitionInstance.onend = function () {
       setIsSpeechDetected(false);
       console.log('end');
+      if (isStopButtonClicked) {
+        // Stop button was clicked, start summarization
+        startSummarization();
+      }
     };
 
     recognitionInstance.start();
@@ -44,6 +47,9 @@ function App() {
   const stopSpeechRecognition = () => {
     if (recognition) {
       recognition.stop();
+      setIsStopButtonClicked(true);
+      // Start summarization immediately when the "Stop Speech" button is clicked
+      startSummarization();
     }
   };
 
@@ -56,17 +62,29 @@ function App() {
 
   const startSummarization = () => {
     if (!isSpeechDetected) {
-      const transcriptData = transcript;
+      // Split the transcript into individual messages based on line breaks
+      const messages = transcript.split('\n');
 
-      if (transcriptData) {
-        fetch('/summarize', {
+      // Filter out empty messages and timestamps
+      const filteredMessages = messages.filter((message) => message.trim() !== '');
+
+      // Join the filtered messages to create a single text for summarization
+      const summarizedText = filteredMessages.join('\n');
+
+      if (summarizedText) {
+        fetch('http://localhost:8080/summarize', {
           method: 'POST',
-          body: JSON.stringify({ transcript: transcriptData }),
+          body: JSON.stringify({ transcript: summarizedText }),
           headers: {
             'Content-Type': 'application/json',
           },
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
           .then((data) => {
             const newSummary = data.summary;
             setSummary(newSummary);
@@ -105,7 +123,7 @@ function App() {
         <div id="speechTranscriptContainer">
           <div id="transcription">
             <h2>Transcribed Text:</h2>
-            <p>{transcript}</p>
+            {/* <p>{transcript}</p> */}
           </div>
         </div>
       )}

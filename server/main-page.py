@@ -1,28 +1,27 @@
 # Import necessary libraries
-from flask import Flask, render_template, request, redirect, jsonify, send_from_directory
-import speech_recognition as sr
-from pydub import AudioSegment
-from io import BytesIO
-from transformers import BartTokenizer, BartForConditionalGeneration
 import os
+from io import BytesIO
+
+import speech_recognition as sr
+import torch
+from flask import (Flask, jsonify, redirect, render_template, request,
+                   send_from_directory)
+from pydub import AudioSegment
+from transformers import BartForConditionalGeneration, BartTokenizer
+from flask_cors import CORS
+
+# Initialize PyTorch (make sure to do this before loading the model)
+torch_device = "cuda" if torch.cuda.is_available() else "cpu"
+torch.set_default_tensor_type("torch.FloatTensor")
+
 
 app = Flask(__name__)
+CORS(app)
 
 # BART summarization model and tokenizer
 model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
-
-#  path to build directory
-react_build_dir = os.path.join(os.path.dirname(__file__), 'client/build')
-
-@app.route("/", methods=["GET"])
-def index():
-    return send_from_directory(react_build_dir, 'index.html')
-
-@app.route("/static/<path:path>", methods=["GET"])
-def serve_static(path):
-    return send_from_directory(os.path.join(react_build_dir, 'static'), path)
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
@@ -30,7 +29,7 @@ def summarize():
         data = request.get_json()
         transcript = data.get("transcript", "")
 
-        #summarization using BART model
+        # Tokenize and summarize the transcript
         input_ids = tokenizer.encode("summarize: " + transcript, return_tensors="pt", max_length=1024, truncation=True)
         summary_ids = summarization_model.generate(input_ids, max_length=150, min_length=40, length_penalty=2.0, num_beams=4, early_stopping=True)
         summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
