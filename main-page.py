@@ -5,7 +5,6 @@ from pydub import AudioSegment
 from io import BytesIO
 from transformers import BartTokenizer, BartForConditionalGeneration
 
-# Initialize the Flask app
 app = Flask(__name__)
 
 # Load BART summarization model and tokenizer
@@ -13,7 +12,6 @@ model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
 
-# Define the index route
 @app.route("/", methods=["GET", "POST"])
 def index():
     transcript = ""
@@ -39,7 +37,6 @@ def index():
 
     return render_template('index.html', transcript=transcript)
 
-# Define a route for summarization
 @app.route("/summarize", methods=["POST"])
 def summarize():
     try:
