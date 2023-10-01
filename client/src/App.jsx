@@ -7,6 +7,9 @@ function App() {
   const [speechTimestamps, setSpeechTimestamps] = useState([]);
   const [recognition, setRecognition] = useState(null);
   const [isStopButtonClicked, setIsStopButtonClicked] = useState(false);
+  const [responses, setResponses] = useState([]);
+  const [generatedResponses, setGeneratedResponses] = useState([]);
+  const [isGeneratingResponses, setIsGeneratingResponses] = useState(false);
 
   const appendTranscriptWithTimestamp = (newTranscript) => {
     const currentTime = new Date().toLocaleTimeString();
@@ -63,6 +66,7 @@ function App() {
       const transcriptData = transcript;
 
       if (transcriptData) {
+        console.log('Starting summarization...');
         fetch('http://localhost:8080/summarize', {
           method: 'POST',
           body: JSON.stringify({ transcript: transcriptData }),
@@ -72,18 +76,33 @@ function App() {
         })
           .then((response) => {
             if (!response.ok) {
-              throw new Error('Network response was not ok');
+              throw new Error('Network response error');
             }
             return response.json();
           })
           .then((data) => {
+            console.log('Res from backend:', data);
             const newSummary = data.summary;
-            setSummary(newSummary);
+            console.log('Summary from response:', newSummary);
+
+            if (newSummary !== undefined) {
+              setSummary(newSummary);
+            } else {
+              console.error('Summary is undefined.');
+            }
+
+            setResponses(data.responses);
+            setGeneratedResponses(data.responses);
+            console.log('Summary generated successfully:', newSummary);
           })
           .catch((error) => {
             console.error('Error:', error);
           });
+      } else {
+        console.log('Transcript data is empty.');
       }
+    } else {
+      console.log('Speech is still detected.');
     }
     setIsSpeechDetected(false);
   };
@@ -94,6 +113,52 @@ function App() {
       startSummarization();
     }
   }, [transcript, isSpeechDetected]);
+
+  useEffect(() => {
+    if (isGeneratingResponses) {
+      fetch("http://localhost:8080/summarize", {
+        method: 'POST',
+        body: JSON.stringify({ transcript: transcript }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response error');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          const generatedSummary = data.summary;
+          const generatedResponses = data.responses;
+          setSummary(generatedSummary);
+          setGeneratedResponses(generatedResponses);
+          setIsGeneratingResponses(false);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    }
+  }, [transcript, isGeneratingResponses]);
+
+  const fetchResponses = () => {
+    setIsGeneratingResponses(true);
+  };
+
+  const renderGeneratedResponses = () => {
+    if (generatedResponses.length === 0) {
+      return <p>No generated responses available.</p>;
+    }
+
+    return (
+      <div id="generatedResponses">
+        {generatedResponses.map((response, index) => (
+          <p key={index}>{response}</p>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="App">
@@ -130,18 +195,18 @@ function App() {
       {/* Step 3: display the summary */}
       <div id="summaryContainer">
         <h2>Summary:</h2>
-        <div id="summary">{summary}</div>
+        {summary !== undefined ? (
+          <div id="summary">{summary}</div>
+        ) : (
+          <p>No summary available.</p>
+        )}
       </div>
 
       {/* Step 4: generate agreements */}
-      <h2>Generated Agreements:</h2>
-      <p>Note: maybe generate 3 agreement templates to choose from (?)</p>
-      <ul>
-        <li>Agreement 1</li>
-        <li>Agreement 2</li>
-        <li>Agreement 3</li>
-        {/* additional agreements will be listed here */}
-      </ul>
+      <div id="generatedResponses">
+        <h2>Generated Responses:</h2>
+        {renderGeneratedResponses()}
+      </div>
 
       {/* Step 5: user feedback and modification using audio file upload */}
       <h2>Review and Modify Agreements:</h2>

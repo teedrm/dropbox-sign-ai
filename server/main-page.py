@@ -1,27 +1,27 @@
-# Import necessary libraries
+import json
 import os
 from io import BytesIO
+import re
 
+import openai
 import speech_recognition as sr
 import torch
-from flask import (Flask, jsonify, redirect, render_template, request,
-                   send_from_directory)
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from pydub import AudioSegment
 from transformers import BartForConditionalGeneration, BartTokenizer
 
-# Initialize PyTorch (make sure to do this before loading the model)
 torch_device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_default_tensor_type("torch.FloatTensor")
-
 
 app = Flask(__name__)
 CORS(app)
 
-# BART summarization model and tokenizer
+# BART
 model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
+
+openai.api_key = "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"
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
@@ -29,18 +29,33 @@ def summarize():
         data = request.get_json()
         transcript = data.get("transcript", "")
         cleaned_transcript = preprocess_transcript(transcript)
-        summary = generate_summary(cleaned_transcript)
 
-        return jsonify({"summary": summary})
+        # summary using BART
+        generated_summary = generate_summary(cleaned_transcript)
+        print("Generated Summary:", generated_summary) 
+
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=generated_summary,
+            max_tokens=4000,
+            n=1,
+            stop=None,
+        )
+
+        generated_responses = [choice.text.strip() for choice in response.choices]
+
+        return jsonify({"summary": generated_summary, "responses": generated_responses})
 
     except Exception as e:
         return jsonify({"error": str(e)})
 
+
 def preprocess_transcript(transcript):
-    # split transcript into sentences and filter out short/irrelevant sentences
-    sentences = transcript.split('.')
+    cleaned_transcript = re.sub(r'\d{2}:\d{2}:\d{2}:', '. ', transcript)
+    sentences = re.split(r'(?<=[.!?])\s+', cleaned_transcript)
+    # filter short/irrelevant sentences
     cleaned_sentences = [s.strip() for s in sentences if len(s) > 10]
-    return ' '.join(cleaned_sentences)
+    return '. '.join(cleaned_sentences)
 
 def generate_summary(text):
     sentences = text.split('. ')
@@ -54,11 +69,9 @@ def generate_summary(text):
         summarized_sentences.append(summary)
 
     combined_summary = ' '.join(summarized_sentences)
-
-    summary = combined_summary.replace("summarize", "").strip()
+    summary_without_timestamps = ' '.join([sentence.split(': ', 1)[-1] for sentence in combined_summary.split('. ')])
     
-    return summary
-
+    return summary_without_timestamps.strip()
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True, host='0.0.0.0', port=8080)
