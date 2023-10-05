@@ -9,6 +9,9 @@ import torch
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from transformers import BartForConditionalGeneration, BartTokenizer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 torch_device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_default_tensor_type("torch.FloatTensor")
@@ -21,9 +24,9 @@ model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
 
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-@app.route("/summarize", methods=["POST"])
+@app.route("/api/summarize", methods=["POST"])
 def summarize():
     try:
         data = request.get_json()
@@ -48,7 +51,6 @@ def summarize():
 
     except Exception as e:
         return jsonify({"error": str(e)})
-
 
 def preprocess_transcript(transcript):
     cleaned_transcript = re.sub(r'\d{2}:\d{2}:\d{2}:', '. ', transcript)
