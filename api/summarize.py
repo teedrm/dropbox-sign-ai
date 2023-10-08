@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request
 import os
 import openai
 import re
+import json
+from http import HTTPStatus
 from transformers import BartForConditionalGeneration, BartTokenizer
 
 # Load environment variables
@@ -11,34 +12,6 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
-
-app = Flask(__name__)
-
-@app.route("/api/summarize", methods=["POST"])
-def summarize():
-    # Your existing code remains largely the same
-    try:
-        data = request.get_json()
-        transcript = data.get("transcript", "")
-        cleaned_transcript = preprocess_transcript(transcript)
-
-        # summary using BART
-        generated_summary = generate_summary(cleaned_transcript)
-
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=generated_summary,
-            max_tokens=4000,
-            n=1,
-            stop=None,
-        )
-
-        generated_responses = [choice.text.strip() for choice in response.choices]
-
-        return jsonify({"summary": generated_summary, "responses": generated_responses})
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
 
 def preprocess_transcript(transcript):
     cleaned_transcript = re.sub(r'\d{2}:\d{2}:\d{2}:', '. ', transcript)
@@ -60,3 +33,36 @@ def generate_summary(text):
     summary_without_timestamps = ' '.join([sentence.split(': ', 1)[-1] for sentence in combined_summary.split('. ')])
     
     return summary_without_timestamps.strip()
+
+def handle(req):
+    try:
+        data = json.loads(req['body'])
+        transcript = data.get("transcript", "")
+        cleaned_transcript = preprocess_transcript(transcript)
+        generated_summary = generate_summary(cleaned_transcript)
+
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=generated_summary,
+            max_tokens=4000,
+            n=1,
+            stop=None,
+        )
+        generated_responses = [choice.text.strip() for choice in response.choices]
+
+        return {
+            "statusCode": HTTPStatus.OK,
+            "body": json.dumps({"summary": generated_summary, "responses": generated_responses}),
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",  # Adjust this as per your security requirements
+                "Access-Control-Allow-Methods": "POST",
+                "Access-Control-Allow-Headers": "Content-Type",
+            }
+        }
+    except Exception as e:
+        return {
+            "statusCode": HTTPStatus.INTERNAL_SERVER_ERROR,
+            "body": json.dumps({"error": str(e)}),
+            "headers": {"Content-Type": "application/json"}
+        }
