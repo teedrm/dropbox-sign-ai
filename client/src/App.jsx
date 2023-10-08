@@ -67,7 +67,8 @@ function App() {
 
       if (transcriptData) {
         console.log('Starting summarization...');
-        fetch('http://localhost:8080/summarize', {
+        // fetch('http://localhost:8080/summarize', {
+          fetch('https://dropbox-vercel-3gbr.vercel.app/api', {
           method: 'POST',
           body: JSON.stringify({ transcript: transcriptData }),
           headers: {
@@ -116,7 +117,8 @@ function App() {
 
   useEffect(() => {
     if (isGeneratingResponses) {
-      fetch("http://localhost:8080/summarize", {
+      // fetch("http://localhost:8080/summarize", {
+        fetch('https://dropbox-vercel-3gbr.vercel.app/api', {
         method: 'POST',
         body: JSON.stringify({ transcript: transcript }),
         headers: {
