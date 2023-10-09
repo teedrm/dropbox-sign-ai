@@ -1,29 +1,17 @@
 import json
 import os
-from io import BytesIO
 import re
-
-import openai
-import speech_recognition as sr
-import torch
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from transformers import BartForConditionalGeneration, BartTokenizer
+import openai
 from dotenv import load_dotenv
 
 load_dotenv()
 
-torch_device = "cuda" if torch.cuda.is_available() else "cpu"
-torch.set_default_tensor_type("torch.FloatTensor")
-
 app = Flask(__name__)
 CORS(app)
 
-# BART
-model_name = "facebook/bart-large-cnn"
-tokenizer = BartTokenizer.from_pretrained(model_name)
-summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
-
+# OpenAI API Key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/api/summarize", methods=["POST"])
@@ -33,7 +21,7 @@ def summarize():
         transcript = data.get("transcript", "")
         cleaned_transcript = preprocess_transcript(transcript)
 
-        # summary using BART
+        # summary using GPT-3
         generated_summary = generate_summary(cleaned_transcript)
         print("Generated Summary:", generated_summary) 
 
@@ -55,25 +43,35 @@ def summarize():
 def preprocess_transcript(transcript):
     cleaned_transcript = re.sub(r'\d{2}:\d{2}:\d{2}:', '. ', transcript)
     sentences = re.split(r'(?<=[.!?])\s+', cleaned_transcript)
-    # filter short/irrelevant sentences
     cleaned_sentences = [s.strip() for s in sentences if len(s) > 10]
     return '. '.join(cleaned_sentences)
 
 def generate_summary(text):
-    sentences = text.split('. ')
-
-    # summaries for each sentence individually
-    summarized_sentences = []
-    for sentence in sentences:
-        input_ids = tokenizer.encode(sentence, return_tensors="pt", max_length=1024, truncation=True)
-        summary_ids = summarization_model.generate(input_ids, max_length=150, min_length=40, length_penalty=2.0, num_beams=4, early_stopping=True)
-        summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-        summarized_sentences.append(summary)
-
-    combined_summary = ' '.join(summarized_sentences)
-    summary_without_timestamps = ' '.join([sentence.split(': ', 1)[-1] for sentence in combined_summary.split('. ')])
+    # Sending the text to OpenAI's GPT-3.5 Turbo API
+    try:
+        # Ensure that text length does not exceed the maximum token limit for the model
+        if len(text.split()) > 4096:  # Splitting by whitespace for simplicity
+            raise ValueError("Text exceeds the maximum token limit for GPT-3.5 Turbo.")
+        
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant that summarizes text."},
+            {"role": "user", "content": f"Summarize: {text}"}
+        ]
+        
+        response = openai.Completion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=messages,
+            max_tokens=150,  # Adjust max_tokens as per your requirement
+            temperature=0.7  # Adjust temperature as per your requirement
+        )
+        
+        summary = response['choices'][0]['message']['content'].strip()
+        return summary
     
-    return summary_without_timestamps.strip()
+    except Exception as e:
+        print(f"Error in generating summary: {str(e)}")
+        return ""
+
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True, host='0.0.0.0', port=8080)

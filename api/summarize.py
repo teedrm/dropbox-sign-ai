@@ -1,17 +1,45 @@
+import json
 import os
 import openai
 import re
-import json
-from http import HTTPStatus
-from transformers import BartForConditionalGeneration, BartTokenizer
 
-# Load environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Use environment variable for OpenAI API Key
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# BART
-model_name = "facebook/bart-large-cnn"
-tokenizer = BartTokenizer.from_pretrained(model_name)
-summarization_model = BartForConditionalGeneration.from_pretrained(model_name)
+def handler(event):
+    try:
+        data = json.loads(event.body)
+        transcript = data.get("transcript", "")
+        cleaned_transcript = preprocess_transcript(transcript)
+
+        # Generate summary using GPT-3.5-turbo
+        generated_summary = generate_summary(cleaned_transcript)
+
+        # Use summary as a prompt for further OpenAI API call
+        response = openai.Completion.create(
+            engine="gpt-3.5-turbo-16k",  # Adjust engine as needed
+            prompt=generated_summary,
+            max_tokens=4000,  # Adjust as needed
+            n=1,
+            stop=None,
+            temperature=0.7
+        )
+        generated_responses = [choice['text'].strip() for choice in response['choices']]
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'summary': generated_summary,
+                'responses': generated_responses
+            }),
+            'headers': {'Content-Type': 'application/json'}
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)}),
+            'headers': {'Content-Type': 'application/json'}
+        }
 
 def preprocess_transcript(transcript):
     cleaned_transcript = re.sub(r'\d{2}:\d{2}:\d{2}:', '. ', transcript)
@@ -20,49 +48,17 @@ def preprocess_transcript(transcript):
     return '. '.join(cleaned_sentences)
 
 def generate_summary(text):
-    sentences = text.split('. ')
-    summarized_sentences = []
-
-    for sentence in sentences:
-        input_ids = tokenizer.encode(sentence, return_tensors="pt", max_length=1024, truncation=True)
-        summary_ids = summarization_model.generate(input_ids, max_length=150, min_length=40, length_penalty=2.0, num_beams=4, early_stopping=True)
-        summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-        summarized_sentences.append(summary)
-
-    combined_summary = ' '.join(summarized_sentences)
-    summary_without_timestamps = ' '.join([sentence.split(': ', 1)[-1] for sentence in combined_summary.split('. ')])
-    
-    return summary_without_timestamps.strip()
-
-def handle(req):
     try:
-        data = json.loads(req['body'])
-        transcript = data.get("transcript", "")
-        cleaned_transcript = preprocess_transcript(transcript)
-        generated_summary = generate_summary(cleaned_transcript)
-
         response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=generated_summary,
+            engine="gpt-3.5-turbo-16k",
+            prompt=text,
             max_tokens=4000,
             n=1,
             stop=None,
+            temperature=0.7
         )
-        generated_responses = [choice.text.strip() for choice in response.choices]
-
-        return {
-            "statusCode": HTTPStatus.OK,
-            "body": json.dumps({"summary": generated_summary, "responses": generated_responses}),
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",  # Adjust this as per your security requirements
-                "Access-Control-Allow-Methods": "POST",
-                "Access-Control-Allow-Headers": "Content-Type",
-            }
-        }
+        summary = response.choices[0].text.strip()
+        return summary
     except Exception as e:
-        return {
-            "statusCode": HTTPStatus.INTERNAL_SERVER_ERROR,
-            "body": json.dumps({"error": str(e)}),
-            "headers": {"Content-Type": "application/json"}
-        }
+        print("Error in generating summary:", str(e))
+        return text  # Return original text if summarization fails
