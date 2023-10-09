@@ -27,17 +27,17 @@ def summarize():
         generated_summary = generate_summary(cleaned_transcript)
         print("Generated Summary:", generated_summary) 
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
-            messages=[{"role": "user", "content" : generated_summary}],
-            max_tokens=4000,
-            n=1,
-            stop=None,
-        )
+        # response = openai.ChatCompletion.create(
+        #     model="gpt-3.5-turbo-16k",
+        #     messages=[{"role": "user", "content" : generated_summary}],
+        #     max_tokens=4000,
+        #     n=1,
+        #     stop=None,
+        # )
 
-        generated_responses = [choice.text.strip() for choice in response.choices]
+        # generated_responses = [choice.text.strip() for choice in response.choices]
 
-        return jsonify({"summary": generated_summary, "responses": generated_responses})
+        return jsonify({"summary": generated_summary, "responses": generated_summary})
 
     except Exception as e:
         return jsonify({"error": str(e)})

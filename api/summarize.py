@@ -16,21 +16,21 @@ def handler(event):
         generated_summary = generate_summary(cleaned_transcript)
 
         # Use summary as a prompt for further OpenAI API call
-        # response = openai.Completion.create(
-        #     engine="gpt-3.5-turbo-16k",  # Adjust engine as needed
-        #     prompt=generated_summary,
-        #     max_tokens=4000,  # Adjust as needed
-        #     n=1,
-        #     stop=None,
-        #     temperature=0.7
-        # )
-        # generated_responses = [choice['text'].strip() for choice in response['choices']]
+        response = openai.Completion.create(
+            engine="gpt-3.5-turbo-16k",  # Adjust engine as needed
+            prompt=generated_summary,
+            max_tokens=4000,  # Adjust as needed
+            n=1,
+            stop=None,
+            temperature=0.7
+        )
+        generated_responses = [choice['text'].strip() for choice in response['choices']]
 
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'summary': generated_summary,
-                'responses': generated_summary
+                'responses': generated_responses
             }),
             'headers': {'Content-Type': 'application/json'}
         }
