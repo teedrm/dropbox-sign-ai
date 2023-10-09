@@ -25,7 +25,7 @@ def summarize():
         generated_summary = generate_summary(cleaned_transcript)
         print("Generated Summary:", generated_summary) 
 
-        response = openai.Completion.create(
+        response = openai.ChatCompletion.create(
             engine="gpt-3.5-turbo-16k",
             prompt=generated_summary,
             max_tokens=4000,
@@ -58,12 +58,14 @@ def generate_summary(text):
             {"role": "user", "content": f"Summarize: {text}"}
         ]
         
-        response = openai.Completion.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=messages,
             max_tokens=150,  # Adjust max_tokens as per your requirement
             temperature=0.7  # Adjust temperature as per your requirement
         )
+
+        
         
         summary = response['choices'][0]['message']['content'].strip()
         return summary
