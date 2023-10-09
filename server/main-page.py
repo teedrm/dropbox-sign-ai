@@ -26,7 +26,7 @@ def summarize():
         print("Generated Summary:", generated_summary) 
 
         response = openai.Completion.create(
-            engine="text-davinci-003",
+            engine="gpt-3.5-turbo-16k",
             prompt=generated_summary,
             max_tokens=4000,
             n=1,
