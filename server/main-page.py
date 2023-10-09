@@ -25,19 +25,23 @@ def summarize():
         generated_summary = generate_summary(cleaned_transcript)
         print("Generated Summary:", generated_summary) 
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
-            messages=[{"role": "user", "content" : generated_summary}],
-            max_tokens=4000,
-            n=1,
-            stop=None,
-        )
-        print("Generated Response:", response['choices'][0]['message']['content'].strip()) 
+        legal_document = generate_legal_document(generated_summary)
+        print("Generated Legal Document:", legal_document) 
 
-        # generated_responses = [choice.text.strip() for choice in response.choices]
-        generated_responses = response['choices'][0]['message']['content'].strip()
+        return jsonify({"summary": generated_summary, "legal_document": legal_document})
+        # response = openai.ChatCompletion.create(
+        #     model="gpt-3.5-turbo-16k",
+        #     messages=[{"role": "user", "content" : generated_summary}],
+        #     max_tokens=4000,
+        #     n=1,
+        #     stop=None,
+        # )
+        # print("Generated Response:", response['choices'][0]['message']['content'].strip()) 
 
-        return jsonify({"summary": generated_summary, "responses": generated_responses})
+        # # generated_responses = [choice.text.strip() for choice in response.choices]
+        # generated_responses = response['choices'][0]['message']['content'].strip()
+
+        # return jsonify({"summary": generated_summary, "responses": generated_responses})
 
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -75,7 +79,36 @@ def generate_summary(text):
     except Exception as e:
         print(f"Error in generating summary: {str(e)}")
         return ""
-
+def generate_legal_document(summary):
+    try:
+        messages = [
+            {
+                "role": "system",
+                "content": ("You are a helpful assistant that generates legal documents "
+                            "based on provided summaries and key points. Ensure the generated document "
+                            "is coherent, uses formal and professional language, and adheres to general "
+                            "legal standards. Create a document that aligns closely with the mentioned "
+                            "details and specifications in the summary.")
+            },
+            {
+                "role": "user",
+                "content": f"Create a legal document based on the following summary: {summary}"
+            }
+        ]
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=messages,
+            max_tokens=4000,  # Adjust max_tokens as per your requirement
+            temperature=0.7  # Adjust temperature as per your requirement
+        )
+        
+        legal_document = response['choices'][0]['message']['content'].strip()
+        return legal_document
+    
+    except Exception as e:
+        print(f"Error in generating legal document: {str(e)}")
+        return ""
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True, host='0.0.0.0', port=8080)
