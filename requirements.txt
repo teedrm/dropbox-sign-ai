@@ -45,7 +45,6 @@ Jinja2
 jupyter_client
 jupyter_core
 langchain
-langsmith
 macholib 
 markdown-it-py
 MarkupSafe
