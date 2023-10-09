@@ -9,13 +9,11 @@ import openai
 from dotenv import load_dotenv
 
 load_dotenv()
-
 app = Flask(__name__)
 CORS(app)
 
 # OpenAI API Key
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
 @app.route("/api/summarize", methods=["POST"])
 def summarize():
     try:
@@ -27,17 +25,19 @@ def summarize():
         generated_summary = generate_summary(cleaned_transcript)
         print("Generated Summary:", generated_summary) 
 
-        # response = openai.ChatCompletion.create(
-        #     model="gpt-3.5-turbo-16k",
-        #     messages=[{"role": "user", "content" : generated_summary}],
-        #     max_tokens=4000,
-        #     n=1,
-        #     stop=None,
-        # )
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[{"role": "user", "content" : generated_summary}],
+            max_tokens=4000,
+            n=1,
+            stop=None,
+        )
+        print("Generated Response:", response['choices'][0]['message']['content'].strip()) 
 
         # generated_responses = [choice.text.strip() for choice in response.choices]
+        generated_responses = response['choices'][0]['message']['content'].strip()
 
-        return jsonify({"summary": generated_summary, "responses": generated_summary})
+        return jsonify({"summary": generated_summary, "responses": generated_responses})
 
     except Exception as e:
         return jsonify({"error": str(e)})
