@@ -109,8 +109,8 @@ function MainPage() {
                             console.error('Summary is undefined.');
                         }
 
-                        setResponses(data.responses);
-                        setGeneratedResponses(data.responses);
+                        setResponses(data.legal_document);
+                        setGeneratedResponses(data.legal_document);
                         console.log('Summary generated successfully:', newSummary);
                     })
                     .catch((error) => {
@@ -185,7 +185,7 @@ function MainPage() {
                 })
                 .then((data) => {
                     const generatedSummary = data.summary;
-                    const generatedResponses = data.responses;
+                    const generatedResponses = data.legal_document;
                     setSummary(generatedSummary);
                     setGeneratedResponses(generatedResponses);
                     setIsGeneratingResponses(false);
