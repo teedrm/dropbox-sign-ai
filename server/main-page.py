@@ -7,6 +7,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import openai
 from pprint import pprint
+from fpdf import FPDF
+import pathlib
 from dropbox_sign import ApiClient, ApiException, Configuration, apis, models
 from dotenv import load_dotenv
 
@@ -20,6 +22,16 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 configuration = Configuration(
     username = os.getenv("DROPBOX_API_KEY"),
 )
+
+def save_to_pdf(text, filename):
+    current_script_path = pathlib.Path('server/main-page.py').resolve()
+    parent_directory = current_script_path.parent.parent
+    filename = parent_directory / filename
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Times", size=12)
+    pdf.multi_cell(0, 10, text)
+    pdf.output(filename)
 @app.route("/api/summarize", methods=["POST"])
 def summarize():
     try:
@@ -33,6 +45,7 @@ def summarize():
 
         legal_document = generate_legal_document(generated_summary)
         print("Generated Legal Document:", legal_document) 
+        save_to_pdf(legal_document, "legal_document.pdf")
 
         return jsonify({"summary": generated_summary, "legal_document": legal_document})
     except Exception as e:
@@ -153,7 +166,7 @@ def dropbox():
                 message="Please sign this NDA and then we can discuss more. Let me know if you have any questions.",
                 signers=[signer_1],
                 cc_email_addresses=["thy_doraemon@yahoo.com"],
-                files=[open("server/legal_document.pdf", "rb")],
+                files=[open("legal_document.pdf", "rb")],
                 signing_options=signing_options,
                 test_mode=True,
             )
