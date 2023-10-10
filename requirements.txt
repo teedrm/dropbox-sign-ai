@@ -118,3 +118,4 @@ zipp
 gunicorn
 gevent
 dropbox-sign
+fpdf
