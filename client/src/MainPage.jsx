@@ -3,6 +3,7 @@ import '@passageidentity/passage-elements/passage-auth';
 import '@passageidentity/passage-elements/passage-profile';
 import { Navigate } from 'react-router-dom';
 import { useCurrentUser } from './useCurrentUser';
+import HelloSign from 'hellosign-embedded';
 function MainPage() {
     const { isLoading, isAuthorized } = useCurrentUser();
     const [transcript, setTranscript] = useState('');
@@ -72,7 +73,7 @@ function MainPage() {
             if (transcriptData) {
                 console.log('Starting summarization...');
                 // fetch('http://localhost:8080/summarize', {
-                fetch('"https://dropbox-backend.onrender.com/api/summarize"', {
+                fetch("https://dropbox-backend.onrender.com/api/summarize", {
                     method: 'POST',
                     body: JSON.stringify({ transcript: transcriptData }),
                     headers: {
@@ -111,7 +112,42 @@ function MainPage() {
         }
         setIsSpeechDetected(false);
     };
+    const client = new HelloSign({
+        clientId: import.meta.env.VITE_CLIENT_ID
+      });
 
+      const openSign = () => {
+        // Initialize link as an empty string
+        let link = "";
+        
+        // Fetch the URL
+        fetch("https://dropbox-backend.onrender.com/api/dropbox", {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+        })
+        .then((response) => {
+            if (!response.ok) {
+                console.log(response);
+                throw new Error('Network response error');
+            }
+            // Return the response as JSON
+            return response.json();
+        })
+        .then(data => {
+            // Extract the sign_url from the JSON data
+            link = data["sign_url"];
+            console.log(link);
+            
+            // Open the client with the fetched link
+            client.open(link, {
+                testMode: true
+            });
+        })
+        .catch(error => console.log('error', error));
+    }
+    
 
     useEffect(() => {
         if (transcript !== '' && !isSpeechDetected) {
@@ -122,7 +158,7 @@ function MainPage() {
     useEffect(() => {
         if (isGeneratingResponses) {
             // fetch("http://localhost:8080/summarize", {
-            fetch('"https://dropbox-backend.onrender.com/api/summarize"', {
+            fetch("https://dropbox-backend.onrender.com/api/summarize", {
                 method: 'POST',
                 body: JSON.stringify({ transcript: transcript }),
                 headers: {
@@ -235,7 +271,9 @@ function MainPage() {
             <p>AI-generated suggestions based on user feedback will display here</p>
 
             {/* Step 7: finalise & download agreements */}
-            <a href="/download">Download Customized Agreements</a>
+            <div>
+        <a href="/download">Download Customized Agreements</a> <button onClick={openSign}>Click Here To Sign</button>
+      </div>
 
             {/* Future features - will leave it here for now and check off later */}
             <h2>Future Features:</h2>
