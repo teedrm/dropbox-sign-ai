@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import '@passageidentity/passage-elements/passage-auth'
-
+import '@passageidentity/passage-elements/passage-auth';
+import '@passageidentity/passage-elements/passage-profile';
+import { Navigate } from 'react-router-dom';
+import { useCurrentUser } from './useCurrentUser';
 function MainPage() {
+    const { isLoading, isAuthorized } = useCurrentUser();
     const [transcript, setTranscript] = useState('');
     const [isSpeechDetected, setIsSpeechDetected] = useState(false);
     const [summary, setSummary] = useState('');
@@ -162,7 +165,14 @@ function MainPage() {
             </div>
         );
     };
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
+    // Redirect to '/' route if user is not authenticated
+    if (!isAuthorized) {
+        return <Navigate to="/" />;
+    }
     return (
 
         <div className="App">
