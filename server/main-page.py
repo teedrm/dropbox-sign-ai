@@ -153,7 +153,7 @@ def dropbox():
                 message="Please sign this NDA and then we can discuss more. Let me know if you have any questions.",
                 signers=[signer_1],
                 cc_email_addresses=["thy_doraemon@yahoo.com"],
-                files=[open("legal_document.pdf", "rb")],
+                files=[open("server/legal_document.pdf", "rb")],
                 signing_options=signing_options,
                 test_mode=True,
             )
