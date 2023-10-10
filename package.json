@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@passageidentity/passage-elements": "^1.14.0"
+  }
+}
